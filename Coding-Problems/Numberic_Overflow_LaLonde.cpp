@@ -1,8 +1,20 @@
-// NumericOverflows.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+/*
+ * @file NumericOverflows.cpp
+ *
+ * Description
+ * This program is used to show how to detect and prevent against numberic overflows and underflows 
+ * when performing basic arithmetic operations. Before performing any addition or subtraction, the program
+ * will check to see if the operation will exceed the valid numeric limit for its data type. If potential 
+ * overflow or underflow is inevitable, the calculation is stopped and a warning message is displayed.
+ * 
+ * @Author: Carl LaLonde
+ * 
+ * @Date: 03/08/2026
+ */
 
 #include <iostream>     // std::cout
 #include <limits>       // std::numeric_limits
+using namespace std;
 
 /// <summary>
 /// Template function to abstract away the logic of:
@@ -14,12 +26,23 @@
 /// <param name="steps">The number of steps to iterate</param>
 /// <returns>start + (increment * steps)</returns>
 template <typename T>
-T add_numbers(T const& start, T const& increment, unsigned long int const& steps)
-{
+T add_numbers(T const& start, T const& increment, unsigned long int const& steps, bool& overFlow) {
+
     T result = start;
 
-    for (unsigned long int i = 0; i < steps; ++i)
-    {
+    // bool overFlow used to detect if there is an overflow about to happen (false for no and true if yes)
+    overFlow = false;
+
+    for (unsigned long int i = 0; i < steps; ++i) {
+
+        // check if adding increment would put result higher than allowed.
+        if (result > numeric_limits<T>::max() - increment) {
+            
+            overFlow = true;
+
+            return result;
+        }
+
         result += increment;
     }
 
@@ -37,12 +60,23 @@ T add_numbers(T const& start, T const& increment, unsigned long int const& steps
 /// <returns>start - (increment * steps)</returns>
 
 template <typename T>
-T subtract_numbers(T const& start, T const& decrement, unsigned long int const& steps)
-{
+T subtract_numbers(T const& start, T const& decrement, unsigned long int const& steps, bool& underFlow) {
+
     T result = start;
 
-    for (unsigned long int i = 0; i < steps; ++i)
-    {
+    // bool underFlow used to detect if there is an underflow going to happen (false for no and true if yes)
+    underFlow = false;
+
+    for (unsigned long int i = 0; i < steps; ++i) {
+
+        // check if subtracting decrement would put result lower than allowed.
+        if (result < numeric_limits<T>::lowest() + decrement) {
+            
+            underFlow = true;
+
+            return result;
+        }
+
         result -= decrement;
     }
 
@@ -86,13 +120,38 @@ void test_overflow()
     std::cout << "Overflow Test of Type = " << typeid(T).name() << std::endl;
     // END DO NOT CHANGE
 
+    // Keeps track if an overflow occurs.
+    bool overFlow = false;
+
     std::cout << "\tAdding Numbers Without Overflow (" << +start << ", " << +increment << ", " << steps << ") = ";
-    T result = add_numbers<T>(start, increment, steps);
-    std::cout << +result << std::endl;
+
+    T result = add_numbers<T>(start, increment, steps, overFlow);
+
+    // Checks if an overflow occured during calculation
+    if (overFlow) {
+
+        cout << "Numeric overflow... addition failed." << endl;
+    }
+
+    else {
+
+        cout << +result << endl;
+    }
 
     std::cout << "\tAdding Numbers With Overflow (" << +start << ", " << +increment << ", " << (steps + 1) << ") = ";
-    result = add_numbers<T>(start, increment, steps + 1);
-    std::cout << +result << std::endl;
+
+    result = add_numbers<T>(start, increment, steps + 1, overFlow);
+
+    // Checks if an overflow occured during calculation
+    if (overFlow) {
+
+        cout << "Numeric overflow... addition failed." << endl;
+    }
+
+    else {
+
+        cout << +result << endl;
+    }
 }
 
 template <typename T>
@@ -127,13 +186,38 @@ void test_underflow()
     std::cout << "Underflow Test of Type = " << typeid(T).name() << std::endl;
     // END DO NOT CHANGE
 
+    // Keeps track if an underflow occures.
+    bool underFlow = false;
+
     std::cout << "\tSubtracting Numbers Without Overflow (" << +start << ", " << +decrement << ", " << steps << ") = ";
-    auto result = subtract_numbers<T>(start, decrement, steps);
-    std::cout << +result << std::endl;
+
+    auto result = subtract_numbers<T>(start, decrement, steps, underFlow);
+    
+    // Checks if an underflow occured during calculation.
+    if (underFlow) {
+
+        cout << "Numeric underflow... subtraction failed." << endl;
+    }
+
+    else {
+
+        cout << +result << endl;
+    }
 
     std::cout << "\tSubtracting Numbers With Overflow (" << +start << ", " << +decrement << ", " << (steps + 1) << ") = ";
-    result = subtract_numbers<T>(start, decrement, steps + 1);
-    std::cout << +result << std::endl;
+
+    result = subtract_numbers<T>(start, decrement, steps + 1, underFlow);
+
+    // Checks if an underflow occured during calculation.
+    if (underFlow) {
+
+        cout << "Numeric underflow... subtraction failed." << endl;
+    }
+
+    else {
+
+        cout << +result << endl;
+    }
 }
 
 void do_overflow_tests(const std::string& star_line)
